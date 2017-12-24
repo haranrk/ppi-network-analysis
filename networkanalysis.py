@@ -52,47 +52,73 @@ for line in ess_file:
 ####2.ANALYZING THE NETWORK####
 print("ANALYZING NETWORK")
 centrality_measures = {}
-#a)Degree
+
+print("1. Degree Centrality")
 degreenew=nx.degree_centrality(G)
 centrality_measures['Degree centrality']=degreenew
 
-#b)The closeness centrality
+print("2. Closeness centrality")
 closeness=Counter(nx.algorithms.centrality.closeness_centrality(G))
 centrality_measures['Closeness Centrality']=closeness
 
-#c)The betweenness centrality
+print("3. Betweenness centrality")
 betweenness=Counter(nx.algorithms.centrality.betweenness_centrality(G))
 centrality_measures['Betweenness Centrality']=betweenness
 
-#d)The clustering coefficient
+print("4. Clustering coefficient")
 clust_coeff=Counter(nx.clustering(G))
 centrality_measures['Clustering Co-efficient']=clust_coeff
-#e)eigenvector centrality
+
+print("5. Eigenvector centrality")
 eigenc = nx.eigenvector_centrality(G)
 centrality_measures['Eigenvector Centrality']=eigenc
-#f)subgraph centrality
-#subc=nx.communicability_centrality(G)
 
-#g)information centrality
+print("6. Subgraph centrality")
+subc=nx.subgraph_centrality(G)
+centrality_measures["Subgraph"]=subc
+
+#7)information centrality
 #inc=nx.current_flow_closeness_centrality(G)
-cliq={}
+#centrality_measures["Information Centrality"]=inc
+#remove dced comp
 
-#i)cliquenumber
+print("8. Clique Number")
+cliq={}
 for i in G.nodes():
    cliq[i]=nx.node_clique_number(G,i)
+centrality_measures["Clique Number"]=cliq
 
-#j)edge clustering coefficient
+print("9. Edge clustering coefficient")
 for e in G.edges():
     G[e[0]][e[1]]['ecc'] = ecc_single(G,e)
-
 edge_clus_coeff={}
 for i in G.nodes():
     edge_clus_coeff[i]=sum(map(ecc,G.edges(i)))
 centrality_measures['Edge Clustering Coefficient']=edge_clus_coeff
 
-#pg
+print("10. Page Rank")
 pg=nx.pagerank(G)
 centrality_measures['Page Rank']=pg
+
+#11) Random Walk Betweenness Centrality
+#rwbc=nx.current_flow_betweenness_centrality(G)
+#centrality_measures["Random Walk Betweenness Centrality"]=rwbc
+
+print("12. Load Centrality")
+load_cent=nx.load_centrality(G)
+centrality_measures["Load Centrality"]=load_cent
+
+print("13. Communicability Betweenness")
+#communicability_betweenness=nx.communicability_betweenness_centrality(G)
+#centrality_measures["Communicability Betweenness"]=communicability_betweenness
+
+print("14. Harmonic Centrality")
+harmonic_cent=nx.harmonic_centrality(G)
+centrality_measures["Harmonic Centrality"]=harmonic_cent
+
+print("15. Reaching Centrality")
+#reach_cent = nx.local_reaching_centrality(G)
+#centrality_measures["Reaching Centrality"]=reach_cent
 
 for name, values in centrality_measures.items():
 	ess_protein_measures = []
@@ -106,9 +132,11 @@ for name, values in centrality_measures.items():
 	        non_ess_protein_measures.append(measure)
 	ess_protein_measures = np.array(ess_protein_measures)
 	non_ess_protein_measures = np.array(non_ess_protein_measures)
-	print(ess_protein_measures.mean())
 	print(name)
-	print("Ess:     %f %f \nNon_ess: %f %f" % (ess_protein_measures.mean(), ess_protein_measures.std(), non_ess_protein_measures.mean(), non_ess_protein_measures.std()))
+	print("Ess:     %f %f \nNon_ess: %f %f \n" % (ess_protein_measures.mean(), ess_protein_measures.std(), non_ess_protein_measures.mean(), non_ess_protein_measures.std()))
+
+
+
 
 
 #for i in degreenew.keys():
