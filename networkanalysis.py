@@ -8,46 +8,26 @@ from collections import OrderedDict
 import math
 import numpy as np
 import powerlaw #to install in linux use easy_install powerlaw
-    
+import functions as f    
 
 
-##Edge Clustering Coefficient
-def ecc(e):
-    return G[e[0]][e[1]]['ecc']
 
-def ecc_single(G,e):
-    numerator = len(list(nx.common_neighbors(G,e[0],e[1]))) + 1
-    denominator = min(G.degree(e[0]), G.degree(e[1]))
-    return (numerator / (denominator * 1.0))
-
-#import numpy as np
 #np.seterr(divide='ignore', invalid='ignore')
-#import gzip
+
 from optparse import OptionParser
 usage="Usage: %prog -f <filename>"
 
 parser = OptionParser(usage)
 
-parser.add_option("-f", "--file", dest="stringFilename", help="File containing STRING interactions")
+parser.add_option("-f", "--file", dest="org_name", help="Organism ID")
 (options,args)=parser.parse_args()
 
 
-if 'stringFilename' not in locals():
-    options.stringFilename='158879'
+if 'org_name' not in locals():
+	G,ess_proteins = f.import_data()    
+else:
+	G,ess_proteins = f.import_data(org_name)
 
-G=nx.Graph()
-datafile=open("ppi/%s.ppi" % (options.stringFilename))
-for line in datafile:
-    g=line.split(" ")
-    if(int(g[15])>700):
-        G.add_edges_from([(g[0],g[1])],weight=int(g[15]))
-        print('%s %s with %s' % (g[0],g[1],g[15]))
-
-ess_file = open('ess/%s.ess' % (options.stringFilename))
-ess_proteins = []
-for line in ess_file:
-    ess_proteins.append(line.strip()) 
-    print(ess_proteins[-1])
 
 ####2.ANALYZING THE NETWORK####
 print("ANALYZING NETWORK")
@@ -77,7 +57,7 @@ print("6. Subgraph centrality")
 subc=nx.subgraph_centrality(G)
 centrality_measures["Subgraph"]=subc
 
-#7)information centrality
+print("7. Information centrality")
 #inc=nx.current_flow_closeness_centrality(G)
 #centrality_measures["Information Centrality"]=inc
 #remove dced comp
@@ -90,17 +70,17 @@ centrality_measures["Clique Number"]=cliq
 
 print("9. Edge clustering coefficient")
 for e in G.edges():
-    G[e[0]][e[1]]['ecc'] = ecc_single(G,e)
+    G[e[0]][e[1]]['ecc'] = f.ecc_single(G,e)
 edge_clus_coeff={}
 for i in G.nodes():
-    edge_clus_coeff[i]=sum(map(ecc,G.edges(i)))
+    edge_clus_coeff[i]=sum(map(f.ecc,G.edges(i)))
 centrality_measures['Edge Clustering Coefficient']=edge_clus_coeff
 
 print("10. Page Rank")
 pg=nx.pagerank(G)
 centrality_measures['Page Rank']=pg
 
-#11) Random Walk Betweenness Centrality
+print("11. Random Walk Betweenness Centrality")
 #rwbc=nx.current_flow_betweenness_centrality(G)
 #centrality_measures["Random Walk Betweenness Centrality"]=rwbc
 
