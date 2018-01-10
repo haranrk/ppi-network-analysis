@@ -2,33 +2,34 @@ import numpy as np
 import networkx as nx 
 import random as rd 
 from matplotlib import pyplot as plt 
+import functions as f
 
-def grapher(org,thresh):
-	G=nx.Graph()
-	s=''
-	l=[]
-	ess=[]
+# def grapher(org,thresh):
+# 	G=nx.Graph()
+# 	s=''
+# 	l=[]
+# 	ess=[]
 
-	with open (org+'e.txt') as f:
-		while True:
-			s=f.readline()
-			if s=='':
-				break
-			ess.append(s.strip())
+# 	with open (org+'e.txt') as f:
+# 		while True:
+# 			s=f.readline()
+# 			if s=='':
+# 				break
+# 			ess.append(s.strip())
 
 
-	with open(org+'.txt') as f:
-		while True:
-			s=f.readline()
-			if s=='':
-				break
+# 	with open(org+'.txt') as f:
+# 		while True:
+# 			s=f.readline()
+# 			if s=='':
+# 				break
 
-			l=(s.strip().split(' '))
+# 			l=(s.strip().split(' '))
 
-			if int(l[len(l)-1])>thresh:
-				G.add_edge(l[0],l[1],weight=float(l[len(l)-1]))
+# 			if int(l[len(l)-1])>thresh:
+# 				G.add_edge(l[0],l[1],weight=float(l[len(l)-1]))
 
-	return (G,ess)
+# 	return (G,ess)
 
 def randomise1(G):
 
@@ -84,8 +85,21 @@ def wdegree_centrality(G):
 	
 	return dict(zip(w_d.keys(),lst2))
 
+def jack_f(G,c):
+	G_ret=nx.Graph()
+	G_ret=G
+	G_ret.remove(rd.sample(G.nodes(),int(len(G.nodes())*c)))
+	return (G_ret)
 
+def compare(dist1,dist2):
+	if np.mean(dist1)>np.mean(dist2):
+		return 3
+	else:
+		return 1
 
+def make_dicshs(G):
+	ret=[]
+	return ret 
 
 
 def zsco(dist1,dist2):
@@ -107,47 +121,141 @@ def dict_file(org,thresh,n):
 
 	return ret
 
+def p_vals(dicshs,case=1,niter=500):
+	print("Calculating P vals with method #%d" % (case))
+	if case==1:
+		ret=[]
+		for name,dic in dicshs.items():
+			print(name)
+			P=[]
+			c,sig=0,[]
+			for nd in G.nodes():
+				if nd in ess:
+					c+=1
+					sig.append(dic[nd])
+
+
+			for i in range(niter):
+
+				chig=[]
+				sel=rd.sample(G.nodes,c)
+				for nd in sel:
+					chig.append(dic[nd])
+					P.append(zsco(sig,chig))
+
+				ret.append(len([i for i in P if i>2.33]))
+		return ret
+
+	if case==2:
+
+		ret=[]
+
+		for i in range(niter):
+			rdicshs=make_dicshs(randomise1(G))
+
+			for dic,rdic in zip(dicshs,rdicshs):
+				P=[]
+				sig,chig=[]
+				for nd in G.nodes():
+					if nd in ess:
+						sig.append(dic[nd])
+						chig.append(rdic[nd])
+
+
+			P.append(zsco(sig,chig))
+
+		ret.append(len([i for i in P if i>2.33]))
+
+	if case==3:
+
+		ret=[]
+		rdicshs=make_dicshs(randomise2(G))
+
+		for dic,rdic in zip(dicshs,rdicshs):
+			P=[]
+			sig=[]
+			for nd in G.nodes():
+				if nd in ess:
+					sig.append(dic[nd])
+
+			for i in range(niter):
+				chig=[]
+				for nd in G.nodes():
+					if nd in ess:
+						chig.append(rdic[nd])
+				P.append(zsco(sig,chig))
+
+			ret.append(len([i for i in P if i>2.33]))
+
+	
+	if case==4:
+
+		ret=[]
+		rdicshs=make_dicshs(jack_f(G))
+
+		for dic,rdic in zip(dicshs,rdicshs):
+			P=[]
+			sig=[]
+			for nd in G.nodes():
+				if nd in ess:
+					sig.append(dic[nd])
+
+			for i in range(niter):
+				chig=[]
+				for nd in G.nodes():
+					if nd in ess:
+						chig.append(rdic[nd])
+				P.append(zsco(sig,chig))
+
+			ret.append(len([i for i in P if i>2.33]))
 
 
 
-niter=1000
-'''
-G=nx.Graph()
-ess=[]
-G,ess=grapher('511145',700)
-res=10 
-'''
-DEG=wdegree_centrality(grapher('243273',700)[0])
-Gnodes=list(DEG.keys())
 
-ess=[]
-with open ('511145'+'e.txt') as f:
-	while True:
-		s=f.readline()
-		if s=='':
-			break
-		ess.append(s.strip())
 
-c,sig=0,[]
-for nd in Gnodes:
-	if nd in ess:
-		c+=1
-		sig.append(DEG[nd])
+G,ess=f.import_data()
+dicshs=f.calc_centralities(G)
+p_val=p_vals(dicshs,1)
+print(p_val)
+# niter=1000
+# '''
+# G=nx.Graph()
+# ess=[]
+# G,ess=grapher('511145',700)
+# res=10 
+# '''
+# G,ess=f.import_data()
+# DEG=wdegree_centrality(G)
+# Gnodes=list(DEG.keys())
 
-P=[]
-print (c)
+# # ess=[]
+# # with open ('511145'+'e.txt') as f:
+# # 	while True:
+# # 		s=f.readline()
+# # 		if s=='':
+# # 			break
+# # 		ess.append(s.strip())
 
-d=0
-for i in range(niter):
-	chig=[]
-	sel=rd.sample(Gnodes,c)
-	for nd in sel:
-		chig.append(DEG[nd])
+# c,sig=0,[]
+# for nd in Gnodes:
+# 	if nd in ess:
+# 		c+=1
+# 		sig.append(DEG[nd])
 
-	P.append(zsco(sig,chig))
+# P=[]
+# print (c)
 
-c=[i for i in P if i>2.33]
-print (len(c))
+# d=0
+# for i in range(niter):
+# 	chig=[]
+# 	sel=rd.sample(Gnodes,c)
+# 	for nd in sel:
+# 		chig.append(DEG[nd])
+
+# 	P.append(zsco(sig,chig))
+
+# c=[i for i in P if i>2.33]
+# print (len(c))
 '''
 c,d=[0,0],[0,0]
 gsl=[]
