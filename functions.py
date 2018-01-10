@@ -54,8 +54,8 @@ def calc_centralities(G):
     print("1. Degree Centrality")
     centrality_measures['Degree centrality']=nx.degree_centrality(G)
     
-    # print("2. Closeness centrality")
-    # centrality_measures['Closeness Centrality']=Counter(nx.algorithms.centrality.closeness_centrality(G))
+    print("2. Closeness centrality")
+    centrality_measures['Closeness Centrality']=Counter(nx.algorithms.centrality.closeness_centrality(G))
     
     # print("3. Betweenness centrality")
     # centrality_measures['Betweenness Centrality']=Counter(nx.algorithms.centrality.betweenness_centrality(G))

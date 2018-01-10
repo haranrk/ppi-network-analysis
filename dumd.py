@@ -123,9 +123,10 @@ def dict_file(org,thresh,n):
 
 def p_vals(dicshs,case=1,niter=500):
 	print("Calculating P vals with method #%d" % (case))
+	ret={}
 	if case==1:
-		ret=[]
 		for name,dic in dicshs.items():
+			ret[name]=[]
 			print(name)
 			P=[]
 			c,sig=0,[]
@@ -134,25 +135,23 @@ def p_vals(dicshs,case=1,niter=500):
 					c+=1
 					sig.append(dic[nd])
 
-
 			for i in range(niter):
-
+				P=[]
 				chig=[]
 				sel=rd.sample(G.nodes,c)
 				for nd in sel:
 					chig.append(dic[nd])
 					P.append(zsco(sig,chig))
 
-				ret.append(len([i for i in P if i>2.33]))
+				ret[name].append(len([i for i in P if i>2.33]))
+		for name,value in ret.items():
+			ret[name]=np.mean(value)/500
 		return ret
 
 	if case==2:
-
-		ret=[]
-
 		for i in range(niter):
 			rdicshs=make_dicshs(randomise1(G))
-
+			
 			for dic,rdic in zip(dicshs,rdicshs):
 				P=[]
 				sig,chig=[]
@@ -215,8 +214,11 @@ def p_vals(dicshs,case=1,niter=500):
 
 G,ess=f.import_data()
 dicshs=f.calc_centralities(G)
-p_val=p_vals(dicshs,1)
-print(p_val)
+p_vals=p_vals(dicshs,1)
+for name,p_val in p_vals.items():
+	print(name)
+	print(p_val)
+	#print(len(p_val))
 # niter=1000
 # '''
 # G=nx.Graph()
