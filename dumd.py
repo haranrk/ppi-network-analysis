@@ -4,37 +4,10 @@ import random as rd
 from matplotlib import pyplot as plt 
 import functions as f
 
-# def grapher(org,thresh):
-# 	G=nx.Graph()
-# 	s=''
-# 	l=[]
-# 	ess=[]
-
-# 	with open (org+'e.txt') as f:
-# 		while True:
-# 			s=f.readline()
-# 			if s=='':
-# 				break
-# 			ess.append(s.strip())
-
-
-# 	with open(org+'.txt') as f:
-# 		while True:
-# 			s=f.readline()
-# 			if s=='':
-# 				break
-
-# 			l=(s.strip().split(' '))
-
-# 			if int(l[len(l)-1])>thresh:
-# 				G.add_edge(l[0],l[1],weight=float(l[len(l)-1]))
-
-# 	return (G,ess)
-
 def randomise1(G):
 
 	lst_nds=G.nodes()
-	dum=lst_nds.copy()
+	dum=list(lst_nds).copy()
 	rd.shuffle(dum)
 	map=dict(zip(lst_nds,dum))
 
@@ -43,12 +16,12 @@ def randomise1(G):
 	for ed in G.edges():
 		G_shuf.add_edge(map[ed[0]],map[ed[1]])
 
-	return (G_shuf,dum)
+	return (G_shuf)
 
 def randomise2(G):
 
 	lst_nds=G.nodes()
-	dum=lst_nds.copy()
+	dum=list(lst_nds).copy()
 	rd.shuffle(dum)
 
 	map=dict(zip([x for x in range(len(G.nodes()))],dum))
@@ -85,10 +58,10 @@ def wdegree_centrality(G):
 	
 	return dict(zip(w_d.keys(),lst2))
 
-def jack_f(G,c):
+def jack_f(G,c):# c - % of nodes to be removed
 	G_ret=nx.Graph()
 	G_ret=G
-	G_ret.remove(rd.sample(G.nodes(),int(len(G.nodes())*c)))
+	G_ret.remove(rd.sample(G.nodes(),int(len(G.nodes())*c/100)))
 	return (G_ret)
 
 def compare(dist1,dist2):
@@ -97,17 +70,6 @@ def compare(dist1,dist2):
 	else:
 		return 1
 
-def make_dicshs(G):
-	ret=[]
-	return ret 
-
-
-def zsco(dist1,dist2):
-	x1=np.mean(np.array(dist1))
-	x2=np.mean(np.array(dist2))
-	ssig1=(np.std(np.array(dist1))/np.sqrt(len(dist1)))**2
-	ssig2=(np.std(np.array(dist2))/np.sqrt(len(dist2)))**2
-	return ((x1-x2)/(np.sqrt(np.abs(ssig1-ssig2))))
 
 def dict_file(org,thresh,n):
 	ret={}
@@ -121,17 +83,20 @@ def dict_file(org,thresh,n):
 
 	return ret
 
-def p_vals(dicshs,case=1,niter=500):
+def p_vals(dicshs,case=1,niter=100):
 	print("Calculating P vals with method #%d" % (case))
 	ret={}
+	P={}
+	for name in dicshs:
+		ret[name]=[]
+		P[name]=[]
 	if case==1:
 		for name,dic in dicshs.items():
-			ret[name]=[]
 			print(name)
 			P=[]
 			c,sig=0,[]
 			for nd in G.nodes():
-				if nd in ess:
+					if nd in ess:
 					c+=1
 					sig.append(dic[nd])
 
@@ -144,69 +109,53 @@ def p_vals(dicshs,case=1,niter=500):
 					P.append(zsco(sig,chig))
 
 				ret[name].append(len([i for i in P if i>2.33]))
-		for name,value in ret.items():
-			ret[name]=np.mean(value)/500
-		return ret
+		
 
 	if case==2:
 		for i in range(niter):
-			rdicshs=make_dicshs(randomise1(G))
-			
-			for dic,rdic in zip(dicshs,rdicshs):
-				P=[]
-				sig,chig=[]
+			rdicshs=f.calc_centralities(randomise1(G))
+			for name in dicshs:
+				sig,chig=[],[]
 				for nd in G.nodes():
 					if nd in ess:
-						sig.append(dic[nd])
-						chig.append(rdic[nd])
-
-
-			P.append(zsco(sig,chig))
-
-		ret.append(len([i for i in P if i>2.33]))
+						sig.append(dicshs[name][nd])
+						chig.append(rdicshs[name][nd])
+				P[name].append(zsco(sig,chig))
+				print(P)
+		for name in dicshs:
+			ret[name].append(len([i for i in P[name] if i>2.33]))
 
 	if case==3:
-
-		ret=[]
-		rdicshs=make_dicshs(randomise2(G))
-
-		for dic,rdic in zip(dicshs,rdicshs):
-			P=[]
-			sig=[]
-			for nd in G.nodes():
-				if nd in ess:
-					sig.append(dic[nd])
-
-			for i in range(niter):
-				chig=[]
+		for i in range(niter):
+			rdicshs=f.calc_centralities(randomise2(G))
+			for name in dicshs:
+				sig,chig=[],[]
 				for nd in G.nodes():
 					if nd in ess:
-						chig.append(rdic[nd])
-				P.append(zsco(sig,chig))
-
-			ret.append(len([i for i in P if i>2.33]))
-
+						sig.append(dicshs[name][nd])
+						chig.append(rdicshs[name][nd])
+				P[name].append(zsco(sig,chig))
+				print(P)
+		for name in dicshs:
+			ret[name].append(len([i for i in P[name] if np.abs(i)>2.33]))
 	
 	if case==4:
-
-		ret=[]
-		rdicshs=make_dicshs(jack_f(G))
-
-		for dic,rdic in zip(dicshs,rdicshs):
-			P=[]
-			sig=[]
-			for nd in G.nodes():
-				if nd in ess:
-					sig.append(dic[nd])
-
-			for i in range(niter):
-				chig=[]
+		for i in range(niter):
+			rdicshs=f.calc_centralities(jack_f(G,20))
+			for name in dicshs:
+				sig,chig=[],[]
 				for nd in G.nodes():
 					if nd in ess:
-						chig.append(rdic[nd])
-				P.append(zsco(sig,chig))
+						sig.append(dicshs[name][nd])
+						chig.append(rdicshs[name][nd])
+				P[name].append(zsco(sig,chig))
+				print(P)
+		for name in dicshs:
+			ret[name].append(len([i for i in P[name] if np.abs(i)>2.33]))
 
-			ret.append(len([i for i in P if i>2.33]))
+	for name,value in ret.items():
+	 		ret[name]=np.mean(value)/niter
+	return ret
 
 
 
@@ -214,7 +163,7 @@ def p_vals(dicshs,case=1,niter=500):
 
 G,ess=f.import_data()
 dicshs=f.calc_centralities(G)
-p_vals=p_vals(dicshs,1)
+p_vals=p_vals(dicshs,4)
 for name,p_val in p_vals.items():
 	print(name)
 	print(p_val)
