@@ -1,9 +1,10 @@
+# Calculates the p values for all the centralities and stores it in p_val_data/org_name.pval
 import numpy as np 
 import networkx as nx 
 import random as rd 
 import functions as f
 
-org_name=243273
+org_name=158879
 G,ess=f.import_data(org_name)
 trimmed_G=f.trim_graph(G)
 dicshs=f.calc_centralities(G,org_name)
@@ -44,26 +45,22 @@ for name,dic in dicshs.items():
 print("\np values:")
 for name in p_vals_mean:
 	print(name)
-	f.printpv(p_vals_mean[name],niter)
-	f.printpv(p_vals_med[name],niter)
+	print(f.printpv(p_vals_mean[name],niter))
+	print(f.printpv(p_vals_med[name],niter))
 
 with open('p_val_data/%s.pval'%(org_name),'w') as file:
-	file.write(str(org_name)+' ')
+	file.write('pvaltype ')
 	centrality_list=list(dicshs)
 	for x in centrality_list:
 		file.write(str(x)+' ')
-	file.write('\n')
+	file.write('\nmean ')
+	
+	for x in centrality_list:
+		file.write(f.printpv(p_vals_mean[name],niter)+' ')
+	file.write('\nmedian ')
 
-	for node in G.nodes:
-		file.write(node+' ')
-		for x in centrality_list:
-			if node not in dicshs[x]:
-				file.write('-1 ')
-			else:
-				file.write(str(dicshs[x][node])+' ')
-
-
-
+	for x in centrality_list:
+		file.write(f.printpv(p_vals_med[name],niter)+' ')
 
 # get=f.percentilewise(dicshs,5,ess)
 # for name,dic in get.items():

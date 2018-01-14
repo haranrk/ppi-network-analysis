@@ -36,9 +36,9 @@ def compare(dist1,dist2):
 
 def printpv(n,niter):
     if n==0:
-        print('<1x10^-'+str(int(np.log10(niter))))
+        return '<1x10^-'+str(int(np.log10(niter)))
     else:
-        print(n/niter)
+        return str(n/niter)
 
 
 def import_data_with_weights(org_name=272635):
@@ -186,3 +186,6 @@ def calc_centralities(G,org_name=158879):
 
 
     return centrality_measures
+
+# def import_cached_data(org_name):
+#     file=open("centrality_data/%s.cent")
