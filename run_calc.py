@@ -3,37 +3,70 @@ import networkx as nx
 import random as rd 
 import functions as f
 
-G,ess=f.import_data()
-dicshs=f.calc_centralities(G)
+org_name=243273
+G,ess=f.import_data(org_name)
+trimmed_G=f.trim_graph(G)
+dicshs=f.calc_centralities(G,org_name)
 niter=1000
-p_vals={}
+p_vals_mean={}
+p_vals_med={}
 P={}
 
-for name in dicshs:
-	print(name)
-	p_vals[name]=[]
+for name in dicshs.keys():
+	p_vals_mean[name]=0
+	p_vals_med[name]=0
 	P[name]=[]
 
-	for name,dic in dicshs.items():
-		print(name)
-		P=[]
-		c,sig=0,[]
-		for nd in G.nodes():
-			if nd in ess:
-				c+=1
-				sig.append(dic[nd])
-		for i in range(niter):
-			P=[]
-			chig=[]
-			sel=rd.sample(G.nodes,c)
-			for nd in sel:
-				chig.append(dic[nd])
-				P.append(f.zsco(sig,chig))
-			p_vals[name].append(len([i for i in P if i>2.33]))
+print("\nCalculating p values")
+for name,dic in dicshs.items():
+	#print(name)
+	P=[]
+	c,sig=0,[]
+	#print('Lenght of dic: %d'%(len(dic.keys())))
+	for node in G.nodes():
+		if (node in ess) and (node in dic.keys()):
+			c+=1
+			sig.append(dic[node])
+	#print(c)
+	for i in range(niter):
+		chig=[]
+		if name in ("Information Centrality","Random Walk Betweenness Centrality","Communicability Betweenness"):
+			sampled_nodes=rd.sample(trimmed_G.nodes(),c)
+		else:
+			sampled_nodes=rd.sample(G.nodes(),c)
+		for node in sampled_nodes:
+			chig.append(dic[node])
+		P.append(f.compare(sig,chig))
 
-for name,value in p_vals.items():
-	 	p_vals[name]=np.mean(value)/niter
+	p_vals_mean[name]=len([i for i in P if i[0]>2.33])
+	p_vals_med[name]=len([i for i in P if i[1]>2.33])
 
-for name,p_val in p_vals.items():
+print("\np values:")
+for name in p_vals_mean:
 	print(name)
-	print(p_val)
+	f.printpv(p_vals_mean[name],niter)
+	f.printpv(p_vals_med[name],niter)
+
+with open('p_val_data/%s.pval'%(org_name),'w') as file:
+	file.write(str(org_name)+' ')
+	centrality_list=list(dicshs)
+	for x in centrality_list:
+		file.write(str(x)+' ')
+	file.write('\n')
+
+	for node in G.nodes:
+		file.write(node+' ')
+		for x in centrality_list:
+			if node not in dicshs[x]:
+				file.write('-1 ')
+			else:
+				file.write(str(dicshs[x][node])+' ')
+
+
+
+
+# get=f.percentilewise(dicshs,5,ess)
+# for name,dic in get.items():
+# 	print (name)
+# 	print (get[name])
+

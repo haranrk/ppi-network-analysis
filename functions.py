@@ -3,7 +3,7 @@ import numpy as np
 from collections import Counter
 import functions as f
 
-def import_data(org_name=272635):
+def import_data(org_name=158879):
 	G=nx.Graph()
 	datafile=open("ppi/%s.ppi" % (org_name))
 	print("Importing PPI data")
@@ -20,6 +20,26 @@ def import_data(org_name=272635):
 		#print(ess_proteins[-1])
 
 	return G,ess_proteins
+
+def compare(dist1,dist2):
+    ret=[]
+    if np.mean(dist1)<np.mean(dist2):
+        ret.append(3)
+    else:
+        ret.append(1)
+
+    if np.median(dist1)<np.median(dist2):
+        ret.append(3)
+    else:
+        ret.append(1)
+    return ret
+
+def printpv(n,niter):
+    if n==0:
+        print('<1x10^-'+str(int(np.log10(niter))))
+    else:
+        print(n/niter)
+
 
 def import_data_with_weights(org_name=272635):
 	G=nx.Graph()
@@ -53,9 +73,26 @@ def zsco(dist1,dist2):
 	x2=np.mean(np.array(dist2))
 	ssig1=(np.std(np.array(dist1))/np.sqrt(len(dist1)))**2
 	ssig2=(np.std(np.array(dist2))/np.sqrt(len(dist2)))**2
-	return ((x1-x2)/(np.sqrt(np.abs(ssig1-ssig2))))
+	return [((x1-x2)/(np.sqrt(np.abs(ssig1-ssig2))))]
 
-def calc_centralities(G):
+def percentilewise(dicshs,res,ess):
+    rret={}
+ 
+    for name,dic in dicshs.items():
+        ret={}
+        for x in range(res,100,res):
+            n=0
+            for nd in dicshs[name].keys():
+                if dicshs[name][nd]>np.percentile(list(dicshs[name].values()),x):
+                    if nd in ess:
+                        n+=1
+            ret[x]=n,(len(ess))
+        rret[name]=ret
+        print (name,ret[95])
+    return (rret)
+
+
+def calc_centralities(G,org_name=158879):
 	
     print("Calculating centralities")
     centrality_measures = {}
@@ -109,8 +146,8 @@ def calc_centralities(G):
     print("12. Load Centrality")
     centrality_measures["Load Centrality"]=nx.load_centrality(G)
     
-    print("13. Communicability Betweenness")
-    centrality_measures["Communicability Betweenness"]=nx.communicability_betweenness_centrality(f.trim_graph(G))
+    print("13. Communicability Betweenness(not calculated)")
+    # centrality_measures["Communicability Betweenness"]=nx.communicability_betweenness_centrality(f.trim_graph(G))
     
     print("14. Harmonic Centrality")
     centrality_measures["Harmonic Centrality"]=nx.harmonic_centrality(G)
@@ -121,7 +158,31 @@ def calc_centralities(G):
     	reach_cent[node] = nx.local_reaching_centrality(G,node)
     centrality_measures["Reaching Centrality"]=reach_cent
     
-#    print("16. Katz Centrality")
- #   centrality_measures["Katz Centrality"]=nx.katz_centrality(G)
+    print("16. Katz Centrality(not calculated)")
+#   centrality_measures["Katz Centrality"]=nx.katz_centrality(G)
+
+    datafile=open("refex_props/%s.refex" % (org_name))
+    for x in range(1,94):
+        print("%d. Refex#%d" % (x+16,x))
+        centrality_measures["refex#%d" % (x)]={}
+    for line in datafile:
+        props=line.strip().split(" ")
+        props=[i.strip('\t') for i in props]
+        #print(props)
+        for x in range(1,93):
+            centrality_measures["refex#%d" % (x)][props[0]]=float(props[x+1])
+
+    datafile=open("refex_rider_props/%s.riderproperties" % (org_name))
+    for x in range(1,11):
+        print("%d. Refex Rider#%d" % (x+16+93,x))
+        centrality_measures["refex_rider#%d" % (x)]={}
+    for line in datafile:
+        props=line.strip().split(" ")
+        props=[i.strip('\t') for i in props]
+        #print(props)
+        for x in range(1,len(props)-1):
+            centrality_measures["refex_rider#%d" % (x)][props[0]]=float(props[x+1])
+
+
 
     return centrality_measures

@@ -64,11 +64,6 @@ def jack_f(G,c):# c - % of nodes to be removed
 	G_ret.remove(rd.sample(G.nodes(),int(len(G.nodes())*c/100)))
 	return (G_ret)
 
-def compare(dist1,dist2):
-	if np.mean(dist1)>np.mean(dist2):
-		return 3
-	else:
-		return 1
 
 
 def dict_file(org,thresh,n):
@@ -97,8 +92,8 @@ def p_vals(dicshs,case=1,niter=100):
 			c,sig=0,[]
 			for nd in G.nodes():
 					if nd in ess:
-					c+=1
-					sig.append(dic[nd])
+						c+=1
+						sig.append(dic[nd])
 
 			for i in range(niter):
 				P=[]
@@ -106,7 +101,7 @@ def p_vals(dicshs,case=1,niter=100):
 				sel=rd.sample(G.nodes,c)
 				for nd in sel:
 					chig.append(dic[nd])
-					P.append(zsco(sig,chig))
+					P.append(f.zsco(sig,chig))
 
 				ret[name].append(len([i for i in P if i>2.33]))
 		
@@ -163,7 +158,7 @@ def p_vals(dicshs,case=1,niter=100):
 
 G,ess=f.import_data()
 dicshs=f.calc_centralities(G)
-p_vals=p_vals(dicshs,4)
+p_vals=p_vals(dicshs,1)
 for name,p_val in p_vals.items():
 	print(name)
 	print(p_val)
