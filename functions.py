@@ -2,24 +2,51 @@ import networkx as nx
 import numpy as np
 from collections import Counter
 import functions as f
+import scipy.io as spio
 
-def import_data(org_name=158879):
+def import_data(org_name=243273,string_version=0):
 	G=nx.Graph()
-	datafile=open("ppi/%s.ppi" % (org_name))
+	if string_version==1:
+		string_location='new_string'
+		edge_weight_column=15
+	elif string_version==0:
+		string_location='old_string'
+		edge_weight_column=2
+	else:
+		print("Not available")
+	datafile=open("%s/%s.ppi" % (string_location,org_name))
 	print("Importing PPI data")
+	
 	for line in datafile:
 		g=line.split(" ")
-		if(int(g[15])>700):
-			G.add_edges_from([(g[0],g[1])],weight=int(g[15]))
+		if(int(g[edge_weight_column])>700):
+			G.add_edges_from([(g[0],g[1])],weight=int(g[edge_weight_column]))
 			#print('%s %s with %s' % (g[0],g[1],g[15]))
 
-	ess_file = open('ess/%s.ess' % (org_name))
+	ess_file = open('%s/%s.ess' % (string_location,org_name))
 	ess_proteins = []
 	for line in ess_file:
 		ess_proteins.append(line.strip()) 
 		#print(ess_proteins[-1])
 
 	return G,ess_proteins
+
+def import_from_mat(org_name=243273):
+    mat = spio.loadmat('all_net_data.mat',squeeze_me=True)
+    centrality_measures={}
+    org_id=9    
+    cc=list(mat['cc'][9])
+    bwcent=list(mat['bwcent'][9])
+    degree=list(mat['degree'][9])
+    listofnodes=list(mat['nodeList'][org_id])
+    centrality_measures['Betweenness Centrality']=dict(zip(listofnodes,bwcent))
+    centrality_measures['Degree Centrality']=dict(zip(listofnodes,degree))
+    centrality_measures['Closeness Centrality']=dict(zip(listofnodes,cc))
+    ess=[listofnodes[x] for x in range(len(listofnodes)) if mat['isEss'][9][x]==1]
+    # G = nx.Graph()
+
+    return ess,centrality_measures,listofnodes
+
 
 def compare(dist1,dist2):
     ret=[]
@@ -90,6 +117,10 @@ def percentilewise(dicshs,res,ess):
         rret[name]=ret
         print (name,ret[95])
     return (rret)
+
+def log_output(output,filename):
+	with open('output_logs/%s.log' % (filename), 'w') as file:
+		file.write(output)
 
 
 def calc_centralities(G,org_name=158879):
@@ -187,5 +218,19 @@ def calc_centralities(G,org_name=158879):
 
     return centrality_measures
 
-# def import_cached_data(org_name):
-#     file=open("centrality_data/%s.cent")
+def printer():
+	pass
+
+# ess1,dicshs1,Gnodes=f.import_from_mat()
+# G,ess2=f.import_data(158879)
+# dicshs2=calc_centralities(G,158879)
+# for name,val in dicshs1.items():
+#     print(name)
+#     print(len(dicshs2[name].keys()))
+#     print(len(dicshs1[name].keys()))
+#     c=0
+#     for x in dicshs1[name]:
+        
+#         if x in dicshs2[name].keys():
+#             c+=1
+#             print('%f %f %f %d' % (dicshs1[name][x],dicshs2[name][x],dicshs1[name][x]/dicshs2[name][x],c))
