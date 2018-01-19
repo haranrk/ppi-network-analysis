@@ -4,12 +4,14 @@ import networkx as nx
 import random as rd 
 import functions as f
 
-org_name=3702
-# ess,dicshs,Gnodes=f.import_from_mat()
-G,ess=f.import_data(org_name,0)
+#Modifiable variables
+org_name=243273
+string_version=0
+niter=1000
+
+G,ess=f.import_data(org_name,string_version)
 dicshs=f.calc_centralities(G,org_name)
 trimmed_G=f.trim_graph(G)
-niter=1000
 p_vals_mean={}
 p_vals_med={}
 P={}
@@ -21,7 +23,7 @@ for name in dicshs.keys():
 
 print("\nCalculating p values")
 for name,dic in dicshs.items():
-	#print(name)
+	print(name)
 	P=[]
 	c,sig=0,[]
 	#print('Lenght of dic: %d'%(len(dic.keys())))

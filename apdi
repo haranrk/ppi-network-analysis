@@ -1,3 +1,0 @@
-res=2
-for x in range(res,100,res):
-	print (x)
