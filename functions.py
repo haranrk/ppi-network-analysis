@@ -7,14 +7,8 @@ import os.path
 
 def import_data(org_name=243273,string_version=0):
     G=nx.Graph()
-    if string_version==1:
-        string_location='new_string'
-        edge_weight_column=15
-    elif string_version==0:
-        string_location='old_string'
-        edge_weight_column=2
-    else:
-        print("Not available")
+    string_location,edge_weight_column=string_version_data(string_version)
+    print(edge_weight_column)
     datafile=open("string_data/%s/%s.ppi" % (string_location,org_name))
     print("Importing PPI data")
     
@@ -124,15 +118,23 @@ def log_output(output,filename):
     with open('output_logs/%s.log' % (filename), 'w') as file:
         file.write(output)
 
-
-def calc_centralities(G,org_name=158879,string_version=1):
-    print("Calculating centralities")
-    centrality_measures = {}
+def string_version_data(string_version):
     if string_version==1:
         string_location='new_string'
+        edge_weight_column=15
+    elif string_version==0:
+        string_location='old_string'
+        edge_weight_column=2
     else:
-        string_version='old_string'
+        print("Not available")
+    return string_location,edge_weight_column
 
+def calc_centralities(G,org_name,string_version):
+    print("Calculating centralities")
+    centrality_measures = {}
+    string_location=f.string_version_data(string_version)[0]
+    print(string_location)
+    # if 1==0:
     if os.path.isfile('centrality_data/%s/%s.cent'%(string_location,org_name)):
         print("Using cached centrality data")
         file=open('centrality_data/%s/%s.cent'%(string_location,org_name))
@@ -141,7 +143,7 @@ def calc_centralities(G,org_name=158879,string_version=1):
         centrality_list.pop(0)
         
         for i,centrality in enumerate(centrality_list):
-            print("%d. %s" % (i+1,centrality))
+            # print("%d. %s" % (i+1,centrality))
             centrality_measures[centrality]={}
 
         for line in lines:
@@ -200,7 +202,7 @@ def calc_centralities(G,org_name=158879,string_version=1):
         centrality_measures["Load_Centrality"]=nx.load_centrality(G)
         
         print("13. Communicability Betweenness")
-        centrality_measures["Communicability_Betweenness"]=nx.communicability_betweenness_centrality(f.trim_graph(G))
+       # centrality_measures["Communicability_Betweenness"]=nx.communicability_betweenness_centrality(f.trim_graph(G))
         
         print("14. Harmonic Centrality")
         centrality_measures["Harmonic_Centrality"]=nx.harmonic_centrality(G)

@@ -6,11 +6,12 @@ import functions as f
 
 #Modifiable variables
 org_name=243273
-string_version=0
+string_version=1
 niter=1000
 
+string_location=f.string_version_data(string_version)[0]
 G,ess=f.import_data(org_name,string_version)
-dicshs=f.calc_centralities(G,org_name)
+dicshs=f.calc_centralities(G,org_name,string_version)
 trimmed_G=f.trim_graph(G)
 p_vals_mean={}
 p_vals_med={}
@@ -23,18 +24,19 @@ for name in dicshs.keys():
 
 print("\nCalculating p values")
 for name,dic in dicshs.items():
-	print(name)
+	# print(name)
 	P=[]
 	c,sig=0,[]
-	#print('Lenght of dic: %d'%(len(dic.keys())))
+	# print('Lenght of dic: %d'%(len(dic.keys())))
 	for node in G.nodes():
 		if (node in ess) and (node in dic.keys()):
 			c+=1
 			sig.append(dic[node])
-	#print(c)
+	# print(c)
 	for i in range(niter):
 		chig=[]
-		if name in ("Information Centrality","Random Walk Betweenness Centrality","Communicability Betweenness"):
+		if name in ("Information_Centrality","Random_Walk_Betweenness_Centrality","Communicability_Betweenness"):
+			# print('sds')
 			sampled_nodes=rd.sample(trimmed_G.nodes(),c)
 		else:
 			sampled_nodes=rd.sample(G.nodes(),c)
@@ -51,19 +53,11 @@ for name in p_vals_mean:
 	print(f.printpv(p_vals_mean[name],niter))
 	print(f.printpv(p_vals_med[name],niter))
 
-with open('p_val_data/%s.pval'%(org_name),'w') as file:
-	file.write('pvaltype ')
+with open('p_val_data/%s/%s.pval'%(string_location,org_name),'w') as file:
+	file.write('pvaltype\tmean\tmedian\n')
 	centrality_list=list(dicshs)
 	for x in centrality_list:
-		file.write(str(x)+' ')
-	file.write('\nmean ')
-	
-	for x in centrality_list:
-		file.write(f.printpv(p_vals_mean[name],niter)+' ')
-	file.write('\nmedian ')
-
-	for x in centrality_list:
-		file.write(f.printpv(p_vals_med[name],niter)+' ')
+		file.write(str(x)+'\t'+f.printpv(p_vals_mean[x],niter)+'\t'+f.printpv(p_vals_med[x],niter)+'\n')
 
 # get=f.percentilewise(dicshs,5,ess)
 # for name,dic in get.items():
