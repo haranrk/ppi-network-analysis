@@ -4,11 +4,11 @@ from collections import Counter
 import functions as f
 import scipy.io as spio
 import os.path
+from matplotlib import pyplot as plt
 
-def import_data(org_name=243273,string_version=0):
+def import_data(org_name=243273,string_version=1):
     G=nx.Graph()
     string_location,edge_weight_column=string_version_data(string_version)
-    print(edge_weight_column)
     datafile=open("string_data/%s/%s.ppi" % (string_location,org_name))
     print("Importing PPI data")
     
@@ -16,15 +16,33 @@ def import_data(org_name=243273,string_version=0):
         g=line.split(" ")
         if(int(g[edge_weight_column])>700):
             G.add_edges_from([(g[0],g[1])],weight=int(g[edge_weight_column]))
-            #print('%s %s with %s' % (g[0],g[1],g[15]))
 
     ess_file = open('string_data/%s/%s.ess' % (string_location,org_name))
     ess_proteins = []
     for line in ess_file:
         ess_proteins.append(line.strip()) 
-        #print(ess_proteins[-1])
-
     return G,ess_proteins
+
+#imports pvals from the p_vaL_data folder
+def import_pvals(org_name):
+    pvals={}
+    with open("p_val_data/new_string/%s.pval" % (org_name)) as file:
+        lines=file.readlines()
+        lines.pop(0)
+        for line in lines:
+            s=line.strip().split('\t')
+            pvals[s[0]]=[]
+            pvals[s[0]].append(s[1])
+            pvals[s[0]].append(s[2])
+    return pvals
+
+#returns a list of the taxonomical organsims IDs
+def import_org_names():
+    org_names=[]
+    with open("org_names.txt") as file:
+        for line in file:
+            org_names.append(line.strip())
+    return org_names
 
 #imports node data, centralities from Raman's mat file
 def import_from_mat(org_name=243273):
@@ -63,7 +81,6 @@ def printpv(n,niter):
     else:
         return str(n/niter)
 
-
 def import_data_with_weights(org_name=272635):
     G=nx.Graph()
     datafile=open("ppi/%s.ppi" % (org_name))
@@ -72,15 +89,6 @@ def import_data_with_weights(org_name=272635):
         g=line.split(" ")
         G.add_edges_from([(g[0],g[1])],weight=float(g[15])/1000)
     return G
-
-#Edge Clustering Coefficient
-def ecc(G,e):
-    return G[e[0]][e[1]]['ecc']
-
-def ecc_single(G,e):
-    numerator = len(list(nx.common_neighbors(G,e[0],e[1]))) + 1
-    denominator = min(G.degree(e[0]), G.degree(e[1]))
-    return (numerator / (denominator * 1.0))
 
 #Removes all subgraphs except the largest
 def trim_graph(G):
@@ -104,15 +112,39 @@ def percentilewise(dicshs,res,ess):
     for name,dic in dicshs.items():
         ret={}
         for x in range(res,100,res):
-            n=0
+            n,d=0,0
             for nd in dicshs[name].keys():
+
                 if dicshs[name][nd]>np.percentile(list(dicshs[name].values()),x):
+                    d+=1
                     if nd in ess:
                         n+=1
-            ret[x]=n,(len(ess))
+            if d==0:
+                ret[x]=0
+            else:            
+                ret[x]=n/d
         rret[name]=ret
-        print (name,ret[95])
     return (rret)
+
+def grapher(org_name,dicshs,res,ess):
+    
+    print("Calculating percentile")
+    percentilewise=f.percentilewise(dicshs,res,ess)
+
+    if not os.path.isdir("graphs/%s"%(org_name)):
+        os.mkdir("graphs/%s"%(org_name))
+
+    print("Generating graphs")
+    for name,dic in percentilewise.items():
+        fig=plt.figure()
+        plt.scatter(percentilewise[name].keys(),percentilewise[name].values())
+        fig.suptitle(name+' '+str(org_name))
+        plt.xlabel('Percentile of nodes\' degree')
+        plt.ylabel('Fraction of essential nodes with a higher degree')
+        plt.xlim(0,100)
+        plt.ylim(0,1)
+        fig.savefig("graphs/%s"%(org_name)+str(org_name)+'_'+name+'.jpg')
+
 
 def log_output(output,filename):
     with open('output_logs/%s.log' % (filename), 'w') as file:
@@ -143,12 +175,12 @@ def calc_centralities(G,org_name,string_version):
         centrality_list.pop(0)
         
         for i,centrality in enumerate(centrality_list):
-            # print("%d. %s" % (i+1,centrality))
             centrality_measures[centrality]={}
 
         for line in lines:
             value_list=line.split(' ')
             for i,centrality in enumerate(centrality_list):
+                # print("%d. %s" % (i+1,centrality))
                 centrality_measures[centrality][value_list[0]]=float(value_list[i+1])
     else:
         
@@ -202,7 +234,7 @@ def calc_centralities(G,org_name,string_version):
         centrality_measures["Load_Centrality"]=nx.load_centrality(G)
         
         print("13. Communicability Betweenness")
-       # centrality_measures["Communicability_Betweenness"]=nx.communicability_betweenness_centrality(f.trim_graph(G))
+        centrality_measures["Communicability_Betweenness"]=nx.communicability_betweenness_centrality(f.trim_graph(G))
         
         print("14. Harmonic Centrality")
         centrality_measures["Harmonic_Centrality"]=nx.harmonic_centrality(G)

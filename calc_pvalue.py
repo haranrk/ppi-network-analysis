@@ -5,7 +5,7 @@ import random as rd
 import functions as f
 
 #Modifiable variables
-org_name=243273
+org_name=208963
 string_version=1
 niter=1000
 
