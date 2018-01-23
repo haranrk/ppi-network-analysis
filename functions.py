@@ -6,7 +6,7 @@ import scipy.io as spio
 import os.path
 from matplotlib import pyplot as plt
 
-def import_data(org_name=243273,string_version=1):
+def import_data(org_name,string_version=1):
     G=nx.Graph()
     string_location,edge_weight_column=string_version_data(string_version)
     datafile=open("string_data/%s/%s.ppi" % (string_location,org_name))
@@ -23,17 +23,22 @@ def import_data(org_name=243273,string_version=1):
         ess_proteins.append(line.strip()) 
     return G,ess_proteins
 
-#imports pvals from the p_vaL_data folder
-def import_pvals(org_name):
+#imports pvals from the p_val_data folder
+def import_pvals():
+    org_list = f.import_org_names()
     pvals={}
-    with open("p_val_data/new_string/%s.pval" % (org_name)) as file:
-        lines=file.readlines()
-        lines.pop(0)
-        for line in lines:
-            s=line.strip().split('\t')
-            pvals[s[0]]=[]
-            pvals[s[0]].append(s[1])
-            pvals[s[0]].append(s[2])
+    for org_name in org_list:
+        if os.path.isfile('p_val_data/new_string/%s.pval'%(org_name)):
+            pvals[org_name]={}
+
+            with open("p_val_data/new_string/%s.pval" % (org_name)) as file:
+                lines=file.readlines()
+                lines.pop(0)
+                for line in lines:
+                    s=line.strip().split('\t')
+                    pvals[org_name][s[0]]=[]
+                    pvals[org_name][s[0]].append(s[1])
+                    pvals[org_name][s[0]].append(s[2])
     return pvals
 
 #returns a list of the taxonomical organsims IDs
@@ -143,7 +148,7 @@ def grapher(org_name,dicshs,res,ess):
         plt.ylabel('Fraction of essential nodes with a higher degree')
         plt.xlim(0,100)
         plt.ylim(0,1)
-        fig.savefig("graphs/%s"%(org_name)+str(org_name)+'_'+name+'.jpg')
+        fig.savefig("graphs/%s/"%(org_name)+str(org_name)+'_'+name+'.jpg')
 
 
 def log_output(output,filename):
@@ -249,27 +254,31 @@ def calc_centralities(G,org_name,string_version):
     #   centrality_measures["Katz_Centrality"]=nx.katz_centrality(G)
     
         datafile=open("refex_props/%s.refex" % (org_name))
-        for x in range(1,94):
-            print("%d. Refex#%d" % (x+16,x))
-            centrality_measures["refex#%d" % (x)]={}
+        sample_line=datafile.readline()
+        s= sample_line.strip().split(' ')
+        for x in range(1,len(s)):
+            centrality_measures["refex#%d" % (x)]={}                
         for line in datafile:
             props=line.strip().split(" ")
             props=[i.strip('\t') for i in props]
-            #print(props)
-            for x in range(1,93):
-                centrality_measures["refex#%d" % (x)][props[0]]=float(props[x+1])
-    
+            for x in range(1,len(s)):
+                centrality_measures["refex#%d" % (x)][props[0]]=float(props[x])
+
         datafile=open("refex_rider_props/%s.riderproperties" % (org_name))
-        for x in range(1,11):
-            print("%d. Refex Rider#%d" % (x+16+93,x))
-            centrality_measures["refex_rider#%d" % (x)]={}
+        sample_line=datafile.readline()
+        s= sample_line.strip().split(' ')
+        s.pop(1)
+        print(len(s))
+        for x in range(1,len(s)):
+            centrality_measures["refex_rider#%d" % (x)]={}                
+        
         for line in datafile:
             props=line.strip().split(" ")
-            props=[i.strip('\t') for i in props]
-            #print(props)
-            for x in range(1,len(props)-1):
-                centrality_measures["refex_rider#%d" % (x)][props[0]]=float(props[x+1])
-        
+            props.pop(1)
+            for x in range(1,len(props)):
+
+                centrality_measures["refex_rider#%d" % (x)][props[0]]=float(props[x])
+    
      
         with open('centrality_data/%s/%s.cent'%(string_location,org_name),'w') as file:
             file.write(str(org_name)+' ')

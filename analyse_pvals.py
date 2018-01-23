@@ -2,11 +2,9 @@ import functions as f
 import os.path
 
 org_list = f.import_org_names()
-pvals={}
-for x in org_list:
-	if os.path.isfile('p_val_data/new_string/%s.pval'%(x)):
-		pvals[x]={}
-		pvals[x]=f.import_pvals(x)
+pvals=f.import_pvals()
+
+
 
 significant_features={}
 for org_name, pval in pvals.items():
